@@ -8,12 +8,22 @@ from prometheus_client import start_http_server, Gauge
 from prometheus_client import start_http_server, Gauge
 import time
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+logging.setLevel(os.getenv("AIR_QUALITY_LOGGING_LEVEL"), "INFO")
+
+# Get environment variables
+
 address = os.getenv("AIR_QUALITY_NODE_IP_ADDRESS")
-print(address)
+logger.info("Using node at address %s", address)
 
 token = os.getenv("AIR_QUALITY_NODE_PASSWORD")
 refresh_rate = int(os.getenv("AIR_QUALITY_REFRESH_REATE", 60))
 metrics_port = int(os.getenv('AIR_QUALITY_METRICS_PORT', 8000))
+
+logger.info("Using refresh rate %s", refresh_rate)
+logger.info("Using metrics port %s", metrics_port)
 
 gauge_co2 = Gauge('air_quality_co2', 'CO2 levels in ppm')
 gauge_humidity = Gauge('air_quality_humidity', 'Humidity level in percentage')
@@ -33,7 +43,7 @@ def update_metrics(data):
         if key in d.keys():
             g.set(float(d.get(key)))
         else:
-            print(f"Missing Key {key} in {d}")
+            logger.debug("Missing Key %s in %s", key, d)
     measurements = data.get('measurements', {})
     status = data.get('status', {})
     # Update each gauge with current data
@@ -49,18 +59,9 @@ def update_metrics(data):
 async def main() -> None:
     """Run!"""
     while True:
-        print("Updating metrics...")
+        logger.info("Waiting for metrics to be updated...")
         time.sleep(refresh_rate)
         async with NodeSamba(address, token).async_connect(timeout=60) as node:
             update_metrics(await node.async_get_latest_measurements())
-        # Can take some optional parameters:
-        #   1. include_trends: include trends (defaults to True)
-        # #   2. measurements_to_use: the number of measurements to use when calculating
-        # #      trends (defaults to -1, which means "use all measurements")
-        # history = await node.async_get_history()
-        # with open("data.json", mode="w") as output:
-        #     import json
-        #     json.dump(history, output)
-
 
 asyncio.run(main())
