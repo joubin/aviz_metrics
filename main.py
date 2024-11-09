@@ -43,8 +43,6 @@ def update_metrics(data):
     test_before_update(g=gauge_temperature_C, d=measurements, key='temperature_C')
     test_before_update(g=gauge_temperature_F, d=measurements, key='temperature_F')
     test_before_update(g=gauge_voc, d=measurements, key='voc')
-    test_before_update(g=gauge_battery, d=measurements, key='battery')
-    test_before_update(g=gauge_wifi_strength, d=measurements, key='wifi_strength')
 
 
 
@@ -53,7 +51,7 @@ async def main() -> None:
     while True:
         print("Updating metrics...")
         time.sleep(refresh_rate)
-        async with NodeSamba(address, token) as node:
+        async with NodeSamba(address, token).async_connect(timeout=60) as node:
             update_metrics(await node.async_get_latest_measurements())
         # Can take some optional parameters:
         #   1. include_trends: include trends (defaults to True)
