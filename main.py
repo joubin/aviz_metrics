@@ -63,10 +63,10 @@ def update_metrics(data):
 
 async def main() -> None:
     """Run!"""
-    while True:
-        logger.info("Waiting for metrics to be updated...")
-        time.sleep(refresh_rate)
-        async with NodeSamba(address, token) as node:
+    async with NodeSamba(address, token) as node:
+        while True:
             update_metrics(await node.async_get_latest_measurements())
+            logger.info("Waiting for metrics to be updated...")
+            time.sleep(10)
 
 asyncio.run(main())
