@@ -9,7 +9,12 @@ from prometheus_client import start_http_server, Gauge
 import time
 import os
 address = os.getenv("AIR_QUALITY_NODE_IP_ADDRESS")
+print(address)
+
 token = os.getenv("AIR_QUALITY_NODE_PASSWORD")
+refresh_rate = int(os.getenv("AIR_QUALITY_REFRESH_REATE", 60))
+metrics_port = int(os.getenv('AIR_QUALITY_METRICS_PORT', 8000))
+
 gauge_co2 = Gauge('air_quality_co2', 'CO2 levels in ppm')
 gauge_humidity = Gauge('air_quality_humidity', 'Humidity level in percentage')
 gauge_pm2_5 = Gauge('air_quality_pm2_5', 'PM2.5 level in µg/m³')
@@ -24,18 +29,22 @@ start_http_server(8000)
 
 # Update Prometheus metrics with data
 def update_metrics(data):
+    def test_before_update(g:Gauge, d:dict, key:str):
+        if key in d.keys():
+            g.set(float(d.get(key)))
+        else:
+            print(f"Missing Key {key} in {d}")
     measurements = data.get('measurements', {})
     status = data.get('status', {})
-    
     # Update each gauge with current data
-    gauge_co2.set(float(measurements.get('co2', 0)))
-    gauge_humidity.set(float(measurements.get('humidity', 0)))
-    gauge_pm2_5.set(float(measurements.get('pm2_5', 0)))
-    gauge_temperature_C.set(float(measurements.get('temperature_C', 0)))
-    gauge_temperature_F.set(float(measurements.get('temperature_F', 0)))
-    gauge_voc.set(float(measurements.get('voc', 0)))
-    gauge_battery.set(float(status.get('battery', 0)))
-    gauge_wifi_strength.set(float(status.get('wifi_strength', 0)))
+    test_before_update(g=gauge_co2, d=measurements, key='co2')
+    test_before_update(g=gauge_humidity, d=measurements, key='humidity')
+    test_before_update(g=gauge_pm2_5, d=measurements, key='pm2_5')
+    test_before_update(g=gauge_temperature_C, d=measurements, key='temperature_C')
+    test_before_update(g=gauge_temperature_F, d=measurements, key='temperature_F')
+    test_before_update(g=gauge_voc, d=measurements, key='voc')
+    test_before_update(g=gauge_battery, d=measurements, key='battery')
+    test_before_update(g=gauge_wifi_strength, d=measurements, key='wifi_strength')
 
 
 
@@ -43,10 +52,9 @@ async def main() -> None:
     """Run!"""
     while True:
         print("Updating metrics...")
+        time.sleep(refresh_rate)
         async with NodeSamba(address, token) as node:
-            measurements = await node.async_get_latest_measurements()
-            update_metrics(measurements)
-            time.sleep(60)
+            update_metrics(await node.async_get_latest_measurements())
         # Can take some optional parameters:
         #   1. include_trends: include trends (defaults to True)
         # #   2. measurements_to_use: the number of measurements to use when calculating
