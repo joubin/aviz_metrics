@@ -11,7 +11,12 @@ import os
 import logging
 
 logger = logging.getLogger(__name__)
-logging.setLevel(os.getenv("AIR_QUALITY_LOGGING_LEVEL"), "INFO")
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s:%(message)s",
+    level=os.getenv("AIR_QUALITY_LOGGING_LEVEL", "INFO"),
+    datefmt="%m/%d/%Y %I:%M:%S %p",
+)
 
 # Get environment variables
 
