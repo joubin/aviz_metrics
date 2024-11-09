@@ -67,6 +67,6 @@ async def main() -> None:
         while True:
             update_metrics(await node.async_get_latest_measurements())
             logger.info("Waiting for metrics to be updated...")
-            time.sleep(10)
+            time.sleep(refresh_rate)
 
 asyncio.run(main())
