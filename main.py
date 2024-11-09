@@ -9,7 +9,7 @@ from prometheus_client import start_http_server, Gauge
 import time
 import os
 import logging
-
+NodeSamba
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
@@ -66,7 +66,7 @@ async def main() -> None:
     while True:
         logger.info("Waiting for metrics to be updated...")
         time.sleep(refresh_rate)
-        async with NodeSamba(address, token).async_connect(timeout=60) as node:
+        async with NodeSamba(address, token) as node:
             update_metrics(await node.async_get_latest_measurements())
 
 asyncio.run(main())
